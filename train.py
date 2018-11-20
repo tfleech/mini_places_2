@@ -75,7 +75,7 @@ def run_test():
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = resnet_18()
-    model.load_state_dict(torch.load('./models/model.10', map_location=device))
+    model.load_state_dict(torch.load('./models/model_sgd.10', map_location=device))
     model = model.to(device)
 
     val_loader, test_loader = dataset.get_val_test_loaders(batch_size)
@@ -97,7 +97,7 @@ def run_test():
             output_sorted = output.numpy().argsort()
         #print(output[output_sorted[0]])
         #print(output[output_sorted[-1]])
-        top_5 = output_sorted[-5:]
+        top_5 = output_sorted[:5]
         for i in top_5:
             if i == int(labels):
                 top_5_correct += 1
@@ -113,5 +113,5 @@ def run_test():
 
 
 print('Starting training')
-run()
+run_test()
 print('Training terminated')
