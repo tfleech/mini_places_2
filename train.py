@@ -39,7 +39,6 @@ def run():
         model.train()
 
         for batch_num, (inputs, labels) in enumerate(train_loader, 1):
-            print('I am working')
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -61,13 +60,14 @@ def run():
 
         gc.collect()
         # save after every epoch
-        torch.save(model.state_dict(), "models/model.%d" % epoch)
+        torch.save(model.state_dict(), "models/model_sgd.%d" % epoch)
 
         # TODO: Calculate classification error and Top-5 Error
         # on training and validation datasets here
 
         gc.collect()
-        epoch += 1
+        epoch += 1 
+    return
 
 
 def run_test():
@@ -91,13 +91,13 @@ def run_test():
 
         #print(inputs)
 
-        #with torch.no_grad():
-        output = model(inputs)
-        output = output.to('cpu')[0,:]
-        output_sorted = output.numpy().argsort()
+        with torch.no_grad():
+            output = model(inputs)[0,:]
+            output = output.to('cpu')
+            output_sorted = output.numpy().argsort()
         #print(output[output_sorted[0]])
         #print(output[output_sorted[-1]])
-        top_5 = output_sorted[:5]
+        top_5 = output_sorted[-5:]
         for i in top_5:
             if i == int(labels):
                 top_5_correct += 1
@@ -113,6 +113,5 @@ def run_test():
 
 
 print('Starting training')
-run_test()
+run()
 print('Training terminated')
-
