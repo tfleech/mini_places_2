@@ -28,7 +28,7 @@ def run():
     criterion = nn.CrossEntropyLoss().to(device)
     # TODO: optimizer is currently unoptimized
     # there's a lot of room for improvement/different optimizers
-    optimizer = optim.SGD(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
     epoch = 1
     while epoch <= num_epochs:
@@ -56,7 +56,7 @@ def run():
                     ))
                 running_loss = 0.0
                 gc.collect()
-
+        print(epoch, running_loss)
         gc.collect()
         # save after every epoch
         torch.save(model.state_dict(), "models/model.%d" % epoch)
