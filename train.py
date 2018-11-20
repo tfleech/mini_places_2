@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler
 torch.backends.cudnn.benchmark=True
+import numpy as np
 
 import dataset
 from models.AlexNet import *
@@ -28,7 +29,7 @@ def run():
     criterion = nn.CrossEntropyLoss().to(device)
     # TODO: optimizer is currently unoptimized
     # there's a lot of room for improvement/different optimizers
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.SGD(model.parameters(), lr=1e-3)
 
     epoch = 1
     while epoch <= num_epochs:
@@ -38,6 +39,7 @@ def run():
         model.train()
 
         for batch_num, (inputs, labels) in enumerate(train_loader, 1):
+            print('I am working')
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -56,7 +58,7 @@ def run():
                     ))
                 running_loss = 0.0
                 gc.collect()
-        print(epoch, running_loss)
+
         gc.collect()
         # save after every epoch
         torch.save(model.state_dict(), "models/model.%d" % epoch)
@@ -67,6 +69,50 @@ def run():
         gc.collect()
         epoch += 1
 
+
+def run_test():
+    batch_size = 1
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = resnet_18()
+    model.load_state_dict(torch.load('./models/model.10', map_location=device))
+    model = model.to(device)
+
+    val_loader, test_loader = dataset.get_val_test_loaders(batch_size)
+    num_test_batches = len(val_loader)
+
+    top_5_correct = 0
+    top_1_correct = 0
+    total = 0
+
+    for batch_num, (inputs, labels) in enumerate(val_loader, 1):
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        #print(inputs)
+
+        #with torch.no_grad():
+        output = model(inputs)
+        output = output.to('cpu')[0,:]
+        output_sorted = output.numpy().argsort()
+        #print(output[output_sorted[0]])
+        #print(output[output_sorted[-1]])
+        top_5 = output_sorted[:5]
+        for i in top_5:
+            if i == int(labels):
+                top_5_correct += 1
+        if int(torch.argmax(output)) == int(labels):
+            top_1_correct += 1
+        total += 1
+        if total%100 == 0:
+            print(total)
+        if total > 1000:
+            print("Top 5 correct: ", float(top_5_correct)/total)
+            print("Top 1 correct: ", float(top_1_correct)/total)
+            return
+
+
 print('Starting training')
-run()
+run_test()
 print('Training terminated')
+
