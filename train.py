@@ -75,8 +75,8 @@ def run_test():
     batch_size = 1
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model = resnet_18()
-    model.load_state_dict(torch.load('./models/model.10', map_location=device))
+    model = resnet_50()
+    model.load_state_dict(torch.load('./models/model_res50adam01.10', map_location=device))
     model = model.to(device)
 
     val_loader, test_loader = dataset.get_val_test_loaders(batch_size)
@@ -88,6 +88,10 @@ def run_test():
     
     model.eval()
 
+
+    '''
+    Evaluate on validation set
+    '''
     for batch_num, (inputs, labels) in enumerate(val_loader, 1):
         inputs = inputs.to(device)
         labels = labels.to(device)
@@ -113,6 +117,67 @@ def run_test():
             print("Top 5 correct: ", float(top_5_correct)/total)
             print("Top 1 correct: ", float(top_1_correct)/total)
             return
+
+def generate_test_label():
+    '''
+    Create Test Labels
+    '''
+    batch_size = 1
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = resnet_18()
+    model.load_state_dict(torch.load('./models/model.10', map_location=device))
+    model = model.to(device)
+
+    val_loader, test_loader = dataset.get_val_test_loaders(batch_size)
+    num_test_batches = len(val_loader)
+
+    #print(val_loader.dataset.classes)
+
+    top_5_correct = 0
+    top_1_correct = 0
+    total = 0
+    
+    model.eval()
+
+    F = open("adam_results_3_correct.txt", "w+")
+
+    count = 0
+    for batch_num, (inputs, labels) in enumerate(test_loader, 1):
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        #print(inputs)
+
+        with torch.no_grad():
+            output = model(inputs)
+            output = output.to('cpu')[0,:]
+            output_sorted = output.numpy().argsort()
+        #print(output[output_sorted[0]])
+        #print(output[output_sorted[-1]])
+        top_5 = output_sorted[-5:]
+        #print(top_5)
+        mapped = []
+        for i in top_5:
+            mapped.append(val_loader.dataset.classes[i])
+
+        #print(mapped)
+
+        line = test_loader.dataset.samples[count][0]
+        #line = 'test/' + line[-12:]
+        line = line + ' ' + str(mapped[4])+ ' ' + str(mapped[3])+ ' ' + str(mapped[2])+ ' ' + str(mapped[1])+ ' ' + str(mapped[0])
+        line += '\n'
+        #print(line)
+        F.write(line)
+
+        count += 1
+        if count%100 == 0:
+            print(count)
+
+    F.close()
+        
+
+
 
 
 print('Starting training')

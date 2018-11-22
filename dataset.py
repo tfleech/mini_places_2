@@ -26,5 +26,5 @@ def get_val_test_loaders(batch_size):
     val_loader = torch.utils.data.DataLoader(
             val_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
     test_loader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+            test_dataset, batch_size=batch_size, shuffle=False, num_workers=4)
     return (val_loader, test_loader)
